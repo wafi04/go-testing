@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	pb "github.com/wafi04/auth-go/grpc"
+	pb "github.com/wafi04/go-testing/auth/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

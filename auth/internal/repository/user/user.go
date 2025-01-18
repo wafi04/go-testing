@@ -1,22 +1,15 @@
 package user
 
-// import (
-// 	"context"
-// 	"database/sql"
-// 	"fmt"
-// 	"strings"
-// 	"time"
+import (
+	"database/sql"
 
-// 	"github.com/google/uuid"
-// 	pb "github.com/wafi04/auth-go/grpc"
-// 	"github.com/wafi04/go-testing/common/pkg/logger"
+	"github.com/wafi04/go-testing/common/pkg/logger"
+)
 
-// )
-
-// type UserRepository struct {
-// 	DB     *sql.DB
-// 	logger logger.Logger
-// }
+type UserRepository struct {
+	DB     *sql.DB
+	logger logger.Logger
+}
 
 // func NewUserRepository(db *sql.DB) *UserRepository {
 // 	return &UserRepository{

@@ -1,15 +1,14 @@
-module github.com/wafi04/auth-go
+module github.com/wafi04/go-testing/auth
 
 go 1.22.0
 
 require (
-	github.com/wafi04/go-testing/common v0.0.0-20250118112750-604b0b0abc8f
+	github.com/wafi04/go-testing/common v0.0.0-20250118122314-13c11b46fcc2
 	google.golang.org/grpc v1.69.4
 	google.golang.org/protobuf v1.35.1
 )
 
 require (
-	github.com/google/uuid v1.6.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect

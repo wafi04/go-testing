@@ -2,18 +2,17 @@ package handler
 
 import (
 	"context"
+	"log"
 
-	pb "github.com/wafi04/go-testing/auth-go/grpc"
-	"github.com/wafi04/go-testing/common/pkg/logger"
+	pb "github.com/wafi04/go-testing/auth/grpc"
 )
 
-type AuthHanndler struct {
+type AuthHandler struct {
 	pb.UnimplementedAuthServiceServer
-	logger logger.Logger
 }
 
-func (s *AuthHanndler) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-	s.logger.Log(logger.InfoLevel, "Received CreateUser request for user: %v", req)
+func (s *AuthHandler) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	log.Printf("Received CreateUser request for user: %v", req)
 
 	return &pb.CreateUserResponse{
 		UserId: "12345",

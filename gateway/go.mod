@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/wafi04/auth-go v0.0.0-20250118093059-3eed86bb1d1f
+	github.com/wafi04/go-testing/auth v0.0.0-20250118093059-3eed86bb1d1f
 	google.golang.org/grpc v1.69.4
 )
 
