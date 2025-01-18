@@ -1,0 +1,221 @@
+// auth/grpc/auth.proto
+syntax = "proto3";
+
+option go_package = "github.com/wafi04/auth-go/grpc/pb";
+
+package pb;
+
+// AuthService handles all authentication related operations
+service AuthService {
+    // CreateUser creates a new user account
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+    
+    // Login authenticates a user and returns a session token
+    rpc Login(LoginRequest) returns (LoginResponse) {}
+    
+    // Logout invalidates the current session
+    rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+    
+    // ValidateToken checks if a token is valid and not expired
+    rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse) {}
+    
+    // RefreshToken generates a new access token using a refresh token
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
+    
+    // UpdateUser updates user information
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+
+    // VerifyEmail verifies user's email address
+    rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {}
+
+    // ResendVerification resends verification token
+    rpc ResendVerification(ResendVerificationRequest) returns (ResendVerificationResponse) {}
+
+    // GetSession retrieves current session information
+    rpc GetSession(GetSessionRequest) returns (GetSessionResponse) {}
+
+    // RevokeSession invalidates a specific session
+    rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse) {}
+
+    // ListSessions gets all active sessions for a user
+    rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
+}
+
+// User related messages
+message User {
+    string user_id = 1;
+    string name = 2;
+    string email = 3;
+    string role = 4;
+    string password_hash = 5;
+    bool is_email_verified = 6;
+    bool is_active = 7;
+    int64 created_at = 8;
+    int64 updated_at = 9;
+    int64 last_login_at = 10;
+    repeated string active_sessions = 11;
+}
+
+// Session related messages
+message Session {
+    string session_id = 1;
+    string user_id = 2;
+    string access_token = 3;
+    string refresh_token = 4;
+    string device_info = 5;
+    string ip_address = 6;
+    int64 created_at = 7;
+    int64 expires_at = 8;
+    int64 last_activity_at = 9;
+    bool is_active = 10;
+}
+
+// Verification Token related messages
+message VerificationToken {
+    string token = 1;
+    string user_id = 2;
+    string type = 3;  
+    int64 created_at = 4;
+    int64 expires_at = 5;
+    bool is_used = 6;
+}
+
+message CreateUserRequest {
+    string name = 1;
+    string email = 2;
+    string role = 3;
+    string password = 4;
+}
+
+message CreateUserResponse {
+    string user_id = 1;
+    string access_token = 2;
+    string name = 3;
+    string email = 4;
+    string role = 5;
+    int64 created_at = 6;
+}
+
+message LoginRequest {
+    string name = 1;
+    string password = 2;
+    string device_info = 3;
+    string ip_address = 4;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    string user_id = 2;
+    UserInfo user_info = 3;
+    SessionInfo session_info = 4;
+    int64 expires_at = 5;
+}
+
+message SessionInfo {
+    string session_id = 1;
+    string device_info = 2;
+    string ip_address = 3;
+    int64 created_at = 4;
+    int64 last_activity_at = 5;
+}
+
+message LogoutRequest {
+    string access_token = 1;
+    string session_id = 2;
+}
+
+message LogoutResponse {
+    bool success = 1;
+}
+
+message ValidateTokenRequest {
+    string access_token = 1;
+}
+
+message ValidateTokenResponse {
+    bool valid = 1;
+    string user_id = 2;
+    string session_id = 3;
+    string role = 4;
+    int64 expires_at = 5;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
+    string session_id = 2;
+}
+
+message RefreshTokenResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    int64 expires_at = 3;
+}
+
+message UpdateUserRequest {
+    string user_id = 1;
+    optional string name = 2;
+    optional string email = 3;
+    optional string password = 4;
+    optional string role = 5;
+}
+
+message UpdateUserResponse {
+    string user_id = 1;
+    int64 updated_at = 2;
+}
+
+message VerifyEmailRequest {
+    string verification_token = 1;
+}
+
+message VerifyEmailResponse {
+    bool success = 1;
+    string user_id = 2;
+}
+
+message ResendVerificationRequest {
+    string user_id = 1;
+    string type = 2;  
+}
+
+message ResendVerificationResponse {
+    bool success = 1;
+    string verification_token = 2;
+    int64 expires_at = 3;
+}
+
+message GetSessionRequest {
+    string session_id = 1;
+}
+
+message GetSessionResponse {
+    SessionInfo session_info = 1;
+}
+
+message RevokeSessionRequest {
+    string user_id = 1;
+    string session_id = 2;
+}
+
+message RevokeSessionResponse {
+    bool success = 1;
+}
+
+message ListSessionsRequest {
+    string user_id = 1;
+}
+
+message ListSessionsResponse {
+    repeated SessionInfo sessions = 1;
+}
+
+message UserInfo {
+    string user_id = 1;
+    string name = 2;
+    string email = 3;
+    string role = 4;
+    bool is_email_verified = 5;
+    int64 created_at = 6;
+    int64 updated_at = 7;
+    int64 last_login_at = 8;
+}
