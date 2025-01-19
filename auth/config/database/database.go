@@ -11,11 +11,10 @@ import (
 
 type Database struct {
 	DB *sql.DB
-	// logerr logger.Logger
 }
 
 var (
-	database = "auth"
+	database = "AUTH-SERVICE"
 	password = "password1234"
 	username = "melkey"
 	port     = "5432"

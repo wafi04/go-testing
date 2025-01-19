@@ -4,12 +4,11 @@ go 1.22.0
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/wafi04/go-testing/auth v0.0.0-20250118093059-3eed86bb1d1f
+	github.com/wafi04/go-testing/auth v0.0.0-20250118123226-0516e72c4bbe
 	google.golang.org/grpc v1.69.4
 )
 
 require (
-	github.com/wafi04/go-testing/common v0.0.0-20250118112750-604b0b0abc8f // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect

@@ -503,7 +503,7 @@ func (x *CreateUserResponse) GetCreatedAt() int64 {
 
 type LoginRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Email          string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"name,omitempty"`
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	DeviceInfo    string                 `protobuf:"bytes,3,opt,name=device_info,json=deviceInfo,proto3" json:"device_info,omitempty"`
 	IpAddress     string                 `protobuf:"bytes,4,opt,name=ip_address,json=ipAddress,proto3" json:"ip_address,omitempty"`
@@ -541,9 +541,9 @@ func (*LoginRequest) Descriptor() ([]byte, []int) {
 	return file_grpc_auth_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *LoginRequest) GetName() string {
+func (x *LoginRequest) GetEmail() string {
 	if x != nil {
-		return x.Name
+		return x.Email
 	}
 	return ""
 }
@@ -1663,10 +1663,12 @@ type UserInfo struct {
 	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Email           string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	Role            string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
-	IsEmailVerified bool                   `protobuf:"varint,5,opt,name=is_email_verified,json=isEmailVerified,proto3" json:"is_email_verified,omitempty"`
-	CreatedAt       int64                  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt       int64                  `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	LastLoginAt     int64                  `protobuf:"varint,8,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
+	Password        string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"Password,omitempty"`
+	Picture         string                 `protobuf:"bytes,6,opt,name=picture,proto3" json:"picture,omitempty"`
+	IsEmailVerified bool                   `protobuf:"varint,7,opt,name=is_email_verified,json=isEmailVerified,proto3" json:"is_email_verified,omitempty"`
+	CreatedAt       int64                  `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt       int64                  `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	LastLoginAt     int64                  `protobuf:"varint,10,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1707,10 +1709,22 @@ func (x *UserInfo) GetUserId() string {
 	}
 	return ""
 }
+func (x *UserInfo) GetPicture() string {
+	if x != nil {
+		return x.Picture
+	}
+	return ""
+}
 
 func (x *UserInfo) GetName() string {
 	if x != nil {
 		return x.Name
+	}
+	return ""
+}
+func (x *UserInfo) GetPassword() string {
+	if x != nil {
+		return x.Password
 	}
 	return ""
 }

@@ -12,6 +12,8 @@ service AuthService {
     
     // Login authenticates a user and returns a session token
     rpc Login(LoginRequest) returns (LoginResponse) {}
+
+    rpc  GetUser(GetUserRequest)  returns (GetUserResponse) {}
     
     // Logout invalidates the current session
     rpc Logout(LogoutRequest) returns (LogoutResponse) {}
@@ -39,6 +41,15 @@ service AuthService {
 
     // ListSessions gets all active sessions for a user
     rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
+}
+
+
+message GetUserRequest {
+    string user_id   =  1;
+}
+
+message GetUserResponse  {
+    optional  UserInfo user =1;
 }
 
 // User related messages
