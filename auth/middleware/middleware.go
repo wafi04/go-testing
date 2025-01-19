@@ -84,7 +84,6 @@ func GetUserFromContext(ctx context.Context) (*pb.UserInfo, error) {
 	return user, nil
 }
 
-// AuthMiddleware function for http.Handler
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")

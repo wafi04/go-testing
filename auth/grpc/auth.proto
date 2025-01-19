@@ -13,7 +13,7 @@ service AuthService {
     // Login authenticates a user and returns a session token
     rpc Login(LoginRequest) returns (LoginResponse) {}
 
-    rpc  GetUser(GetUserRequest)  returns (GetUserResponse) {}
+    rpc GetUser(GetUserRequest)  returns (GetUserResponse) {}
     
     // Logout invalidates the current session
     rpc Logout(LogoutRequest) returns (LogoutResponse) {}
