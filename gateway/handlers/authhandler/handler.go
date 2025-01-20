@@ -22,12 +22,31 @@ type AuthHandler struct {
 }
 
 func RegisterAuthHandler(router *mux.Router, handler *AuthHandler) {
-	router.HandleFunc("/register", handler.HandleCreateUser).Methods("POST")
-	router.HandleFunc("/login", handler.HandleLogin).Methods("POST")
+    // Public routes
+    router.HandleFunc("/auth/register", handler.HandleCreateUser).Methods("POST", "OPTIONS")
+    router.HandleFunc("/auth/login", handler.HandleLogin).Methods("POST", "OPTIONS")
 
-	protected := router.PathPrefix("").Subrouter()
-	protected.Use(middleware.AuthMiddleware)
-	protected.HandleFunc("/profile", handler.HandleGetProfile).Methods("GET")
+    // Protected routes dengan CORS dan Auth middleware
+    protected := router.PathPrefix("").Subrouter()
+    
+    // Apply CORS first, then Auth middleware
+    protected.Use(func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+            w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+            w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+            if r.Method == "OPTIONS" {
+                w.WriteHeader(http.StatusOK)
+                return
+            }
+            next.ServeHTTP(w, r)
+        })
+    })
+    protected.Use(middleware.AuthMiddleware)
+    
+    protected.HandleFunc("/auth/profile", handler.HandleGetProfile).Methods("GET", "OPTIONS")
 }
 
 func NewGateway(ctx context.Context) (*AuthHandler, error) {
@@ -149,18 +168,15 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
-	user, err := middleware.GetUserFromContext(r.Context())
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+   
 
-	response := response.Success(user, "Profile received succesfully").WithStatusCode(http.StatusOK)
+    user, err := middleware.GetUserFromContext(r.Context())
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "Error encoding response", http.StatusInternalServerError)
-		return
-	}
-
+    if err != nil {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    response := response.Success(user, "Profile received successfully")
+    json.NewEncoder(w).Encode(response)
 }
