@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+option go_package = "github.com/wafi04/category/grpc";
+
+package grpc;
+
+import "google/protobuf/timestamp.proto";
+
+service CategoryService {
+    rpc CreateCategory (CreateCategoryRequest) returns (Category);
+    rpc GetCategory (GetCategoryRequest) returns (Category);
+    rpc UpdateCategory (UpdateCategoryRequest) returns (Category);
+    rpc DeleteCategory (DeleteCategoryRequest) returns (DeleteCategoryResponse);
+    rpc ListCategories (ListCategoriesRequest) returns (ListCategoriesResponse);
+    rpc GetCategoryHierarchy (GetCategoryRequest) returns (CategoryHierarchyResponse);
+}
+
+message Category {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    optional string image = 4;
+    int32 depth = 5;
+    optional string parent_id = 6;
+    repeated Category children = 7;
+    google.protobuf.Timestamp created_at = 8;
+}
+
+message CreateCategoryRequest {
+    string name = 1;
+    string description = 2;
+    optional string image = 3;
+    optional string parent_id = 4;
+}
+
+message GetCategoryRequest {
+    string id = 1;
+}
+
+message UpdateCategoryRequest {
+    string id = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional string image = 4;
+    optional int32 depth = 5;
+    optional string parent_id = 6;
+}
+
+message DeleteCategoryRequest {
+    string id = 1;
+    bool delete_children = 2;  
+}
+
+message DeleteCategoryResponse {
+    bool success = 1;
+    int64 deleted_count = 2;  
+}
+
+message ListCategoriesRequest {
+    int32 page = 1;
+    int32 limit = 2;
+    optional string parent_id = 3;
+    bool include_children = 4;
+}
+
+message ListCategoriesResponse {
+    repeated Category categories = 1;
+    int32 total = 2;
+}
+
+message CategoryHierarchyResponse {
+    Category root_category = 1;
+    int32 total_descendants = 2;
+    int32 max_depth = 3;
+}

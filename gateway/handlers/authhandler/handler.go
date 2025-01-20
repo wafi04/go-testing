@@ -10,7 +10,9 @@ import (
 
 	"github.com/gorilla/mux"
 	pb "github.com/wafi04/go-testing/auth/grpc"
-	middleware "github.com/wafi04/go-testing/auth/middleware"
+	"github.com/wafi04/go-testing/auth/middleware"
+	"github.com/wafi04/go-testing/gateway/helpers"
+	"github.com/wafi04/go-testing/gateway/pkg/response"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -20,8 +22,31 @@ type AuthHandler struct {
 }
 
 func RegisterAuthHandler(router *mux.Router, handler *AuthHandler) {
-	router.HandleFunc("/register", handler.HandleCreateUser).Methods("POST")
-	router.HandleFunc("/login", handler.HandleLogin).Methods("POST")
+    // Public routes
+    router.HandleFunc("/auth/register", handler.HandleCreateUser).Methods("POST", "OPTIONS")
+    router.HandleFunc("/auth/login", handler.HandleLogin).Methods("POST", "OPTIONS")
+
+    // Protected routes dengan CORS dan Auth middleware
+    protected := router.PathPrefix("").Subrouter()
+    
+    // Apply CORS first, then Auth middleware
+    protected.Use(func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+            w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+            w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+            if r.Method == "OPTIONS" {
+                w.WriteHeader(http.StatusOK)
+                return
+            }
+            next.ServeHTTP(w, r)
+        })
+    })
+    protected.Use(middleware.AuthMiddleware)
+    
+    protected.HandleFunc("/auth/profile", handler.HandleGetProfile).Methods("GET", "OPTIONS")
 }
 
 func NewGateway(ctx context.Context) (*AuthHandler, error) {
@@ -41,26 +66,6 @@ func NewGateway(ctx context.Context) (*AuthHandler, error) {
 	return &AuthHandler{
 		authClient: pb.NewAuthServiceClient(conn),
 	}, nil
-}
-
-func getClientIP(r *http.Request) string {
-	forwardedFor := r.Header.Get("X-Forwarded-For")
-	if forwardedFor != "" {
-		ips := strings.Split(forwardedFor, ",")
-		return strings.TrimSpace(ips[0])
-	}
-
-	realIP := r.Header.Get("X-Real-IP")
-	if realIP != "" {
-		return realIP
-	}
-
-	remoteAddr := r.RemoteAddr
-	if strings.Contains(remoteAddr, ":") {
-		return strings.Split(remoteAddr, ":")[0]
-	}
-
-	return remoteAddr
 }
 
 func (h *AuthHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -91,11 +96,13 @@ func (h *AuthHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Received response from auth service: %+v", resp)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"user_id": resp.UserId,
-		"name":    resp.Name,
-		"message": "hello world",
-	})
+
+	response := response.Success(resp, "User Created Successfully")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
 }
 
 type Login struct {
@@ -121,7 +128,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientIP := getClientIP(r)
+	clientIP := helpers.GetClientIP(r)
 	userAgent := r.UserAgent()
 
 	loginReq := &pb.LoginRequest{
@@ -151,20 +158,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", resp.AccessToken))
 
-	response := map[string]interface{}{
-		"access_token": resp.AccessToken,
-		"user": map[string]interface{}{
-			"user_id": resp.UserId,
-			"name":    "wafi",
-			"email":   loginReq.Email,
-		},
-		"session": map[string]interface{}{
-			"session_id":  resp.SessionInfo.SessionId,
-			"device_info": resp.SessionInfo.DeviceInfo,
-			"ip_address":  resp.SessionInfo.IpAddress,
-			"created_at":  resp.SessionInfo.CreatedAt,
-		},
-	}
+	response := response.Success(resp, "Login Successfully")
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("Error encoding response: %v", err)
@@ -173,28 +167,16 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *AuthHandler) HandleGetProfile(w *http.ResponseWriter, r *http.Request) {
-	user, err := middleware.GetUserFromContext(r.Context())
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+func (h *AuthHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
+   
 
-	// Create response
-	response := map[string]interface{}{
-		"user": map[string]interface{}{
-			"user_id":           user.UserId,
-			"name":              user.Name,
-			"email":             user.Email,
-			"role":              user.Role,
-			"is_email_verified": user.IsEmailVerified,
-		},
-	}
+    user, err := middleware.GetUserFromContext(r.Context())
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "Error encoding response", http.StatusInternalServerError)
-		return
-	}
-
+    if err != nil {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    response := response.Success(user, "Profile received successfully")
+    json.NewEncoder(w).Encode(response)
 }
