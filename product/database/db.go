@@ -2,23 +2,24 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"strconv"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type Database struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
 var (
 	database = "product"
-	password = "postgres"
-	username = "postgres"
+	password = "password"
+	username = "admin"
 	port     = "5432"
-	host     = "192.168.100.81"
+	host     = "127.0.0.1"
 	schema   = "public"
 )
 
@@ -26,7 +27,7 @@ func New() (*Database, error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s",
 		username, password, host, port, database, schema)
 
-	db, err := sql.Open("pgx", connStr)
+	db, err := sqlx.Open("pgx", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %v", err)
 	}

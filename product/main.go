@@ -3,7 +3,7 @@ package main
 import (
 	"net"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver
 
 	"github.com/wafi04/go-testing/common/pkg/logger"
 	"github.com/wafi04/go-testing/product/database"
@@ -30,11 +30,11 @@ func main(){
 
 
 	productService := service.NewProductService(db.DB)
-    categoryHandler := handler.NewProductHandler(productService)
+    productHandler := handler.NewProductHandler(productService)
 
 	grpcServer := grpc.NewServer()
 
-    pb.RegisterProductServiceServer(grpcServer, categoryHandler)
+    pb.RegisterProductServiceServer(grpcServer, productHandler)
 
     lis, err := net.Listen("tcp", port)
     if err != nil {
@@ -42,7 +42,7 @@ func main(){
         return
     }
 
-    log.Log(logger.InfoLevel, "gRPC server starting on port %s", port)
+    log.Log(logger.InfoLevel, "Product service starting on port %s", port)
 
     if err := grpcServer.Serve(lis); err != nil {
         log.Log(logger.ErrorLevel, "Failed to serve: %v", err)

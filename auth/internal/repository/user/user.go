@@ -43,8 +43,8 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *pb.CreateUserRequ
 
 	query := `
         INSERT INTO users (
-            id, name, email, password, role,
-            is_active, email_verified, created_at, updated_at
+            user_id, name, email, password_hash, role,
+            is_active, is_email_verified, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `
 
@@ -77,13 +77,13 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *pb.CreateUserRequ
 
 	query = `
         INSERT INTO verification_tokens (
-            id, user_id, token, type, expires_at
+             user_id, token, type, expires_at,is_used
         ) VALUES ($1, $2, $3, $4, $5)
     `
 
 	_, err = tx.ExecContext(
 		ctx, query,
-		uuid.New().String(), userID, verificationCode, "email_verification", expiresAt,
+		userID, verificationCode, "EMAIL_VERIFICATION", expiresAt,true,
 	)
 
 	if err != nil {
@@ -121,16 +121,16 @@ func (r *UserRepository) Login(ctx context.Context, login *pb.LoginRequest) (*pb
 
 	query := `
     SELECT
-        id,
+        user_id,
         name,
         email,
         role,
-        password,
+        password_hash,
         COALESCE(picture, ''),
-        COALESCE(email_verified, false)::boolean,  
+        COALESCE(is_email_verified, false)::boolean,  
         EXTRACT(EPOCH FROM created_at)::bigint,
         EXTRACT(EPOCH FROM updated_at)::bigint,
-        EXTRACT(EPOCH FROM COALESCE(last_login, created_at))::bigint,
+        EXTRACT(EPOCH FROM COALESCE(last_login_at, created_at))::bigint,
         is_active::boolean
     FROM users
     WHERE email = $1
@@ -199,7 +199,7 @@ func (r *UserRepository) Login(ctx context.Context, login *pb.LoginRequest) (*pb
 
 	_, err = r.DB.ExecContext(
 		ctx,
-		"UPDATE users SET last_login = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+		"UPDATE users SET last_login_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1",
 		userInfo.UserId,
 	)
 	if err != nil {
@@ -218,28 +218,39 @@ func (r *UserRepository) Login(ctx context.Context, login *pb.LoginRequest) (*pb
 		},
 	}, nil
 }
-
 func (sr *UserRepository) CreateSession(ctx context.Context, session *pb.Session) error {
 	query := `
-		INSERT INTO user_sessions (
-			id,
+		INSERT INTO sessions (
+			session_id,
 			user_id,
-			token,
+			access_token,
 			refresh_token,
 			ip_address,
-			user_agent,
 			device_info,
-			is_valid,
+			is_active,
 			expires_at,
-			last_activity,
+			last_activity_at,
 			created_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 		)
 	`
+
+	// Generate UUID if not provided
 	if session.SessionId == "" {
 		session.SessionId = uuid.New().String()
 	}
+
+	// Set current timestamp
+	now := time.Now()
+	expiresAt := now.Add(24 * time.Hour)
+
+	sr.logger.WithFields(map[string]interface{}{
+		"user_id":    session.UserId,
+		"session_id": session.SessionId,
+		"expires_at": expiresAt,
+	}).Debug("Creating new session")
+
 	_, err := sr.DB.ExecContext(
 		ctx,
 		query,
@@ -248,15 +259,25 @@ func (sr *UserRepository) CreateSession(ctx context.Context, session *pb.Session
 		session.AccessToken,
 		session.RefreshToken,
 		session.IpAddress,
-		"",
 		session.DeviceInfo,
-		true,
-		time.Now().Add(24*time.Hour),
+		true,          
+		expiresAt,     
+		now,           
+		now,           
 	)
-	return err
+
+	if err != nil {
+		sr.logger.WithError(err).WithFields(map[string]interface{}{
+			"user_id":    session.UserId,
+			"session_id": session.SessionId,
+		}).Error("Failed to create session")
+		return fmt.Errorf("failed to create session: %w", err)
+	}
+
+	return nil
 }
 
-func (sr *UserRepository) GetUser(ctx context.Context, userID string) (*pb.UserInfo, error) {
+func (sr *UserRepository) GetUser(ctx context.Context, userID string) (*pb.GetUserResponse, error) {
 	query := `
         SELECT 
             id, 
@@ -265,27 +286,27 @@ func (sr *UserRepository) GetUser(ctx context.Context, userID string) (*pb.UserI
 			picture, 
             role, 
             is_active, 
-            email_verified,
+            is_email_verified,
             created_at, 
             updated_at, 
-            last_login
+            last_login_at
         FROM users
         WHERE id = $1
     `
 
-	user := &pb.UserInfo{}
+	user := &pb.GetUserResponse{}
 	var isActive bool
 	err := sr.DB.QueryRowContext(ctx, query, userID).Scan(
-		&user.UserId,
-		&user.Name,
-		&user.Email,
-		&user.Picture,
-		&user.Role,
+		&user.User.UserId,
+		&user.User.Name,
+		&user.User.Email,
+		&user.User.Picture,
+		&user.User.Role,
 		&isActive,
-		&user.IsEmailVerified,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-		&user.LastLoginAt,
+		&user.User.IsEmailVerified,
+		&user.User.CreatedAt,
+		&user.User.UpdatedAt,
+		&user.User.LastLoginAt,
 	)
 
 	if err != nil {

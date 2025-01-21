@@ -40,11 +40,11 @@ func (s *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 
 	return user, nil
 }
-func (s *AuthHandler) GetUser(ctx context.Context, userId string) (*pb.UserInfo, error) {
+func (s *AuthHandler) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse,error) {
 
-	user, err := s.UserService.GetUser(ctx, userId)
+	user, err := s.UserService.GetUser(ctx, req.UserId)
 	if err != nil {
-		return nil, err
+		return &pb.GetUserResponse{}, err
 	}
 
 	return user, nil

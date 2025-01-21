@@ -1,58 +1,25 @@
-// auth/grpc/auth.proto
 syntax = "proto3";
 
-option go_package = "github.com/wafi04/auth-go/grpc/pb";
+option go_package = "github.com/wafi04/auth/grpc/pb";
 
 package pb;
 
-// AuthService handles all authentication related operations
 service AuthService {
-    // CreateUser creates a new user account
+    // Existing RPCs remain the same
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
-    
-    // Login authenticates a user and returns a session token
     rpc Login(LoginRequest) returns (LoginResponse) {}
-
-    rpc GetUser(GetUserRequest)  returns (GetUserResponse) {}
-    
-    // Logout invalidates the current session
+    rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
     rpc Logout(LogoutRequest) returns (LogoutResponse) {}
-    
-    // ValidateToken checks if a token is valid and not expired
     rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse) {}
-    
-    // RefreshToken generates a new access token using a refresh token
     rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
-    
-    // UpdateUser updates user information
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
-
-    // VerifyEmail verifies user's email address
     rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {}
-
-    // ResendVerification resends verification token
     rpc ResendVerification(ResendVerificationRequest) returns (ResendVerificationResponse) {}
-
-    // GetSession retrieves current session information
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse) {}
-
-    // RevokeSession invalidates a specific session
     rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse) {}
-
-    // ListSessions gets all active sessions for a user
     rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
 }
 
-
-message GetUserRequest {
-    string user_id   =  1;
-}
-
-message GetUserResponse  {
-    optional  UserInfo user =1;
-}
-
-// User related messages
 message User {
     string user_id = 1;
     string name = 2;
@@ -65,8 +32,60 @@ message User {
     int64 updated_at = 9;
     int64 last_login_at = 10;
     repeated string active_sessions = 11;
+    string picture = 12;  // New field for user profile picture
 }
 
+// Modified UserInfo message with picture field
+message UserInfo {
+    string user_id = 1;
+    string name = 2;
+    string email = 3;
+    string role = 4;
+    bool is_email_verified = 5;
+    int64 created_at = 6;
+    int64 updated_at = 7;
+    int64 last_login_at = 8;
+    string picture = 9;  // New field for user profile picture
+}
+
+// Modified CreateUserRequest with picture field
+message CreateUserRequest {
+    string name = 1;
+    string email = 2;
+    string role = 3;
+    string password = 4;
+    string picture = 5;  // New field for user profile picture
+}
+
+// Modified CreateUserResponse with picture field
+message CreateUserResponse {
+    string user_id = 1;
+    string access_token = 2;
+    string name = 3;
+    string email = 4;
+    string role = 5;
+    int64 created_at = 6;
+    string picture = 7;  // New field for user profile picture
+}
+
+// Modified UpdateUserRequest with picture field
+message UpdateUserRequest {
+    string user_id = 1;
+    optional string name = 2;
+    optional string email = 3;
+    optional string password = 4;
+    optional string role = 5;
+    optional string picture = 6;  // New field for user profile picture
+}
+
+// All other messages remain unchanged
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    optional UserInfo user = 1;
+}
 // Session related messages
 message Session {
     string session_id = 1;
@@ -91,24 +110,8 @@ message VerificationToken {
     bool is_used = 6;
 }
 
-message CreateUserRequest {
-    string name = 1;
-    string email = 2;
-    string role = 3;
-    string password = 4;
-}
-
-message CreateUserResponse {
-    string user_id = 1;
-    string access_token = 2;
-    string name = 3;
-    string email = 4;
-    string role = 5;
-    int64 created_at = 6;
-}
-
 message LoginRequest {
-    string name = 1;
+    string email = 1;
     string password = 2;
     string device_info = 3;
     string ip_address = 4;
@@ -162,13 +165,6 @@ message RefreshTokenResponse {
     int64 expires_at = 3;
 }
 
-message UpdateUserRequest {
-    string user_id = 1;
-    optional string name = 2;
-    optional string email = 3;
-    optional string password = 4;
-    optional string role = 5;
-}
 
 message UpdateUserResponse {
     string user_id = 1;
@@ -220,13 +216,3 @@ message ListSessionsResponse {
     repeated SessionInfo sessions = 1;
 }
 
-message UserInfo {
-    string user_id = 1;
-    string name = 2;
-    string email = 3;
-    string role = 4;
-    bool is_email_verified = 5;
-    int64 created_at = 6;
-    int64 updated_at = 7;
-    int64 last_login_at = 8;
-}
