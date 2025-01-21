@@ -32,6 +32,6 @@ func (s *UserService) Login(ctx context.Context, login *pb.LoginRequest) (*pb.Lo
 	return s.UserRepository.Login(ctx, login)
 }
 
-func (s *UserService) GetUser(ctx context.Context, userID string) (*pb.UserInfo, error) {
+func (s *UserService) GetUser(ctx context.Context, userID string) (*pb.GetUserResponse, error) {
 	return s.UserRepository.GetUser(ctx, userID)
 }

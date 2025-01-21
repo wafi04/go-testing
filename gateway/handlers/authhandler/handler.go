@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/mux"
 	pb "github.com/wafi04/go-testing/auth/grpc"
 	"github.com/wafi04/go-testing/auth/middleware"
 	"github.com/wafi04/go-testing/gateway/helpers"
@@ -21,33 +20,7 @@ type AuthHandler struct {
 	authClient pb.AuthServiceClient
 }
 
-func RegisterAuthHandler(router *mux.Router, handler *AuthHandler) {
-    // Public routes
-    router.HandleFunc("/auth/register", handler.HandleCreateUser).Methods("POST", "OPTIONS")
-    router.HandleFunc("/auth/login", handler.HandleLogin).Methods("POST", "OPTIONS")
 
-    // Protected routes dengan CORS dan Auth middleware
-    protected := router.PathPrefix("").Subrouter()
-    
-    // Apply CORS first, then Auth middleware
-    protected.Use(func(next http.Handler) http.Handler {
-        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-            w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-            w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-            w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-            if r.Method == "OPTIONS" {
-                w.WriteHeader(http.StatusOK)
-                return
-            }
-            next.ServeHTTP(w, r)
-        })
-    })
-    protected.Use(middleware.AuthMiddleware)
-    
-    protected.HandleFunc("/auth/profile", handler.HandleGetProfile).Methods("GET", "OPTIONS")
-}
 
 func NewGateway(ctx context.Context) (*AuthHandler, error) {
 	log.Println("Attempting to connect to auth service...")
@@ -170,13 +143,26 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
    
 
-    user, err := middleware.GetUserFromContext(r.Context())
+    userid, err := middleware.GetUserFromContext(r.Context())
+	 if err != nil {
+		response.Error(http.StatusUnauthorized, "Unauthorized")
+        return
+    }
+
+	users ,err :=   h.authClient.GetUser(r.Context(), &pb.GetUserRequest{
+		UserId: userid.UserId,
+	})
 
     if err != nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		response.Error(http.StatusUnauthorized, "Unauthorized")
         return
     }
     w.Header().Set("Content-Type", "application/json")
-    response := response.Success(user, "Profile received successfully")
-    json.NewEncoder(w).Encode(response)
+    response := response.Success(users, "Profile received successfully")
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
 }

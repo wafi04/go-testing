@@ -14,11 +14,11 @@ type Database struct {
 }
 
 var (
-	database = "AUTH-SERVICE"
-	password = "password1234"
-	username = "melkey"
+	database = "auth"
+	password = "password"
+	username = "admin"
 	port     = "5432"
-	host     = "192.168.100.81"
+	host     = "127.0.0.1"
 	schema   = "public"
 )
 

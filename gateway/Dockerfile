@@ -9,16 +9,20 @@ WORKDIR /app
 COPY . .
 
 # Set working directory ke auth service
-WORKDIR /app/auth
+WORKDIR /app/gateway
 
 # Download dependencies
 RUN go mod download
 
-# Install specific dependencies
+
 RUN go get -v github.com/jackc/pgx/v5/stdlib \
     && go get -v github.com/google/uuid \
     && go get -v google.golang.org/grpc \
-    && go get -v google.golang.org/protobuf/types/known/timestamppb
+    && go get -v google.golang.org/protobuf/types/known/timestamppb \
+    && go get github.com/wafi04/go-testing/common \
+    && go get github.com/wafi04/go-testing/auth \
+    && go get github.com/wafi04/go-testing/category \
+    && go get github.com/wafi04/go-testing/product
 
 # Tidy up modules
 RUN go mod tidy
@@ -38,7 +42,7 @@ RUN adduser -D -g '' appuser
 WORKDIR /app
 
 # Copy built binary (Fix the path here)
-COPY --from=builder /app/auth/main .
+COPY --from=builder /app/gateway/main .
 
 # Set user
 USER appuser

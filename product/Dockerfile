@@ -9,7 +9,7 @@ WORKDIR /app
 COPY . .
 
 # Set working directory ke auth service
-WORKDIR /app/auth
+WORKDIR /app/product
 
 # Download dependencies
 RUN go mod download
@@ -43,6 +43,6 @@ COPY --from=builder /app/auth/main .
 # Set user
 USER appuser
 
-EXPOSE 50051
+EXPOSE 50053
 
 CMD ["./main"]

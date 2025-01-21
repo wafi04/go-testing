@@ -1,0 +1,93 @@
+services:
+  postgresql:
+    image: postgres:15-alpine
+    container_name: microservice-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_MULTIPLE_DATABASES: auth,category,product
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/create-multiple-databases.sh:/docker-entrypoint-initdb.d/create-multiple-databases.sh
+    restart: always
+
+  # Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./auth/Dockerfile
+    container_name: auth-service
+    ports:
+      - "50051:50051"
+    depends_on:
+      - postgresql
+    environment:
+      - DB_HOST=postgresql
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=auth
+    restart: always
+
+  # Category Service
+  category-service:
+    build:
+      context: .
+      dockerfile: ./category/Dockerfile
+    container_name: category-service
+    ports:
+      - "50052:50052"
+    depends_on:
+      - postgresql
+    environment:
+      - DB_HOST=postgresql
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=category
+    restart: always
+
+  # Product Service
+  product-service:
+    build:
+      context: .
+      dockerfile: ./product/Dockerfile
+    container_name: product-service
+    ports:
+      - "50053:50053"
+    depends_on:
+      - postgresql
+    environment:
+      - DB_HOST=postgresql
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=product
+    restart: always
+
+  # API Gateway
+  gateway:
+    build:
+      context: .
+      dockerfile: ./gateway/Dockerfile
+    container_name: gateway
+    ports:
+      - "4000:4000"
+    depends_on:
+      - auth-service
+      - category-service
+      - product-service
+    environment:
+      - AUTH_SERVICE_HOST=auth-service:50051
+      - CATEGORY_SERVICE_HOST=category-service:50052
+      - PRODUCT_SERVICE_HOST=product-service:50053
+    restart: always
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    driver: bridge

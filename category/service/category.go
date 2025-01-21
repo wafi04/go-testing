@@ -136,7 +136,6 @@ func (s *CategoryService) GetCategories(ctx context.Context, req *pb.ListCategor
     }
     defer rows.Close()
 
-    // Map to store categories by ID for building the tree
     categoryMap := make(map[string]*pb.Category)
     var rootCategories []*pb.Category
 
@@ -151,7 +150,6 @@ func (s *CategoryService) GetCategories(ctx context.Context, req *pb.ListCategor
             &cat.Name,
             &cat.Description,
             &image,
-          
             &parentID,
             &cat.Depth,
             &createdAt,
@@ -161,7 +159,6 @@ func (s *CategoryService) GetCategories(ctx context.Context, req *pb.ListCategor
             return nil, fmt.Errorf("failed to scan category: %v", err)
         }
 
-        // Handle optional fields
         if parentID.Valid {
             cat.ParentId = &parentID.String
         }
@@ -175,11 +172,9 @@ func (s *CategoryService) GetCategories(ctx context.Context, req *pb.ListCategor
 
         categoryMap[cat.Id] = &cat
 
-        // If it's a root category (no parent)
         if !parentID.Valid {
             rootCategories = append(rootCategories, &cat)
         } else {
-            // Add to parent's children
             parent := categoryMap[parentID.String]
             if parent != nil {
                 parent.Children = append(parent.Children, &cat)
@@ -198,7 +193,6 @@ func (s *CategoryService) GetCategories(ctx context.Context, req *pb.ListCategor
 }
 
 func (s *CategoryService) ListCategories(ctx context.Context, req *pb.ListCategoriesRequest) (*pb.ListCategoriesResponse, error) {
-    // Set default values if not provided
     if req.Page <= 0 {
         req.Page = 1
     }
@@ -206,7 +200,6 @@ func (s *CategoryService) ListCategories(ctx context.Context, req *pb.ListCatego
         req.Limit = 10
     }
 
-    // First, get all categories without pagination
     query := `
         SELECT 
             id, 
