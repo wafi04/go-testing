@@ -5,19 +5,18 @@ import (
 	"database/sql"
 	"fmt"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/wafi04/common/pkg/logger"
 	pb "github.com/wafi04/go-testing/auth/grpc"
 	"github.com/wafi04/go-testing/auth/middleware"
-	"github.com/wafi04/shared/pkg/mailer"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func generateVerificationCode() string {
     return fmt.Sprintf("%06d", rand.Intn(1000000))
 }
+
 func (s *UserRepository)  ResendVerification(ctx context.Context,req  *pb.ResendVerificationRequest)  (*pb.ResendVerificationResponse,error)   {
     user,err :=   s.GetUser(ctx, &pb.GetUserRequest{
         UserId: req.UserId,
@@ -36,21 +35,8 @@ func (s *UserRepository)  ResendVerification(ctx context.Context,req  *pb.Resend
     verifyCode := generateVerificationCode()
     expiresAt := time.Now().Add(1 * time.Hour)
 
-    appPW := "gaxa rpob imwk fybt"
-	cleanPassword := strings.ReplaceAll(appPW, " ", "")
-	emailSender := mailer.NewEmailSender(
-		"smtp.gmail.com",
-		587,
-		"wafiq3040@gmail.com",
-		cleanPassword,
-	)
-
-	toEmail := user.User.Email
-
-	if err := emailSender.SendVerificationEmail(toEmail, user.User.Name,verifyCode); err != nil {
-		return nil, fmt.Errorf("failed to send email : %w", err)
-	}
-
+    
+    
 
     query := `
         INSERT INTO verification_tokens (

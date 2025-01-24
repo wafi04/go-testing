@@ -3,14 +3,14 @@ package main
 import (
 	"net"
 
-	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"google.golang.org/grpc"
 
 	"github.com/wafi04/go-testing/common/pkg/logger"
 	"github.com/wafi04/go-testing/product/database"
 	pb "github.com/wafi04/go-testing/product/grpc"
 	"github.com/wafi04/go-testing/product/handler"
 	"github.com/wafi04/go-testing/product/service"
-	"google.golang.org/grpc"
 )
 
 const (

@@ -1,22 +1,45 @@
-// common/pkg/configs/env.go
 package configs
 
 import (
+	"fmt"
 	"os"
-	"path/filepath"
-
-	"github.com/joho/godotenv"
-	"github.com/wafi04/go-testing/common/pkg/logger"
+	"strings"
+	"sync"
 )
 
-func GetEnv(key string, servicePath string) string {
-	log := logger.NewLogger()
+type ConfigManager struct {
+    mu sync.RWMutex
+    envCache map[string]string
+}
 
-	envPath := filepath.Join(servicePath, ".env")
-	err := godotenv.Load(envPath)
-	if err != nil {
-		log.Log(logger.ErrorLevel, "Failed to load env from %s: %v", envPath, err)
-	}
+func NewConfigManager() *ConfigManager {
+    return &ConfigManager{
+        envCache: make(map[string]string),
+    }
+}
 
-	return os.Getenv(key)
+func (cm *ConfigManager) GetEnv(key string) string {
+    cm.mu.RLock()
+    defer cm.mu.RUnlock()
+    
+    if val, exists := cm.envCache[key]; exists {
+        return val
+    }
+    
+    return os.Getenv(key)
+}
+
+func (cm *ConfigManager) LoadEnvs(requiredKeys []string) error {
+    cm.mu.Lock()
+    defer cm.mu.Unlock()
+    
+    for _, key := range requiredKeys {
+        val := os.Getenv(key)
+        if val == "" {
+            return fmt.Errorf("%s is required", key)
+        }
+        cm.envCache[key] = strings.TrimSpace(val)
+    }
+    
+    return nil
 }

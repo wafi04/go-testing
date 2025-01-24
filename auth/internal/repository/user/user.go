@@ -19,11 +19,13 @@ import (
 type UserRepository struct {
 	DB     *sql.DB
 	logger logger.Logger
+    // configManager *configs.ConfigManager
 }
 
 func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{
 		DB: db,
+        // configManager: config,
 	}
 }
 

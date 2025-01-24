@@ -17,11 +17,13 @@ import (
 
 func main() {
 	log := logger.NewLogger()
+
 	db, err := database.New()
 	if err != nil {
 		log.Log(logger.ErrorLevel, "Failed to initialize database : %v: ", err)
 	}
 
+	
 	defer db.Close()
 	health := db.Health()
 	log.Log(logger.InfoLevel, "Database health : %v", health["status"])
@@ -31,6 +33,7 @@ func main() {
 	}
 	authHandler := &handler.AuthHandler{
 		UserService: userService,
+
 	}
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
