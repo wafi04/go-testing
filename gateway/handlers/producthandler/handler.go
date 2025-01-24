@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -46,27 +47,45 @@ func RegisterProductHandler(router *mux.Router, handler *ProductHandler) {
 
 }
 
-
-func NewCategoryGateway(ctx context.Context) (*ProductHandler, error) {
-	log.Println("Attempting to connect to product service...")
-
-	conn, err := grpc.DialContext(ctx,
-		"localhost:50053",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
-	if err != nil {
-		log.Printf("Failed to connect to category service: %v", err)
-		return nil, fmt.Errorf("failed to connect to auth service: %v", err)
-	}
-
-	log.Println("Successfully connected to auth service")
-	return &ProductHandler{
-		productClient: pb.NewProductServiceClient(conn),
-	}, nil
+func connectWithRetry(target string, service string) (*grpc.ClientConn, error) {
+    maxAttempts := 5
+    var conn *grpc.ClientConn
+    var err error
+    
+    for i := 0; i < maxAttempts; i++ {
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+        
+        log.Printf("Attempting to connect to %s service (attempt %d/%d)...", service, i+1, maxAttempts)
+        
+        conn, err = grpc.DialContext(ctx,
+            target,
+            grpc.WithTransportCredentials(insecure.NewCredentials()),
+            grpc.WithBlock(),
+        )
+        
+        if err == nil {
+            log.Printf("Successfully connected to %s service", service)
+            return conn, nil
+        }
+        
+        log.Printf("Failed to connect to %s service: %v. Retrying...", service, err)
+        time.Sleep(2 * time.Second)
+    }
+    
+    return nil, fmt.Errorf("failed to connect to %s service after %d attempts: %v", service, maxAttempts, err)
 }
 
-
+func NewProductGateway(ctx context.Context) (*ProductHandler, error) {
+    conn, err := connectWithRetry("product_service:50052", "product")
+    if err != nil {
+        return nil, err
+    }
+    
+    return &ProductHandler{
+        productClient: pb.NewProductServiceClient(conn),
+    }, nil
+}
 
 func (h  *ProductHandler)   HandleCreateProduct(w http.ResponseWriter,  r *http.Request){
 	log.Printf("Received create product request: %s %s", r.Method, r.URL.Path)

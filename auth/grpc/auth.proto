@@ -5,7 +5,7 @@ option go_package = "github.com/wafi04/auth/grpc/pb";
 package pb;
 
 service AuthService {
-    // Existing RPCs remain the same
+   
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
     rpc Login(LoginRequest) returns (LoginResponse) {}
     rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
@@ -32,10 +32,9 @@ message User {
     int64 updated_at = 9;
     int64 last_login_at = 10;
     repeated string active_sessions = 11;
-    string picture = 12;  // New field for user profile picture
+    string picture = 12;  
 }
 
-// Modified UserInfo message with picture field
 message UserInfo {
     string user_id = 1;
     string name = 2;
@@ -45,19 +44,19 @@ message UserInfo {
     int64 created_at = 6;
     int64 updated_at = 7;
     int64 last_login_at = 8;
-    string picture = 9;  // New field for user profile picture
+    string picture = 9; 
 }
 
-// Modified CreateUserRequest with picture field
 message CreateUserRequest {
     string name = 1;
     string email = 2;
     string role = 3;
     string password = 4;
-    string picture = 5;  // New field for user profile picture
+    string picture = 5; 
+    string ip_address = 6;
+    string device_info = 7;
 }
 
-// Modified CreateUserResponse with picture field
 message CreateUserResponse {
     string user_id = 1;
     string access_token = 2;
@@ -65,20 +64,19 @@ message CreateUserResponse {
     string email = 4;
     string role = 5;
     int64 created_at = 6;
-    string picture = 7;  // New field for user profile picture
+    string picture = 7;  
+    SessionInfo session_info = 8;
 }
 
-// Modified UpdateUserRequest with picture field
 message UpdateUserRequest {
     string user_id = 1;
     optional string name = 2;
     optional string email = 3;
     optional string password = 4;
     optional string role = 5;
-    optional string picture = 6;  // New field for user profile picture
+    optional string picture = 6; 
 }
 
-// All other messages remain unchanged
 message GetUserRequest {
     string user_id = 1;
 }
@@ -86,7 +84,6 @@ message GetUserRequest {
 message GetUserResponse {
     optional UserInfo user = 1;
 }
-// Session related messages
 message Session {
     string session_id = 1;
     string user_id = 2;
@@ -100,7 +97,6 @@ message Session {
     bool is_active = 10;
 }
 
-// Verification Token related messages
 message VerificationToken {
     string token = 1;
     string user_id = 2;
@@ -173,11 +169,13 @@ message UpdateUserResponse {
 
 message VerifyEmailRequest {
     string verification_token = 1;
+    string verify_code = 2;  
 }
 
 message VerifyEmailResponse {
     bool success = 1;
     string user_id = 2;
+    string message = 3;  
 }
 
 message ResendVerificationRequest {
@@ -189,6 +187,7 @@ message ResendVerificationResponse {
     bool success = 1;
     string verification_token = 2;
     int64 expires_at = 3;
+    string verify_code = 4;  
 }
 
 message GetSessionRequest {

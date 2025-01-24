@@ -7,9 +7,11 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	pb "github.com/wafi04/go-testing/auth/grpc"
 	"github.com/wafi04/go-testing/auth/middleware"
+	"github.com/wafi04/go-testing/common/pkg/logger"
 	"github.com/wafi04/go-testing/gateway/helpers"
 	"github.com/wafi04/go-testing/gateway/pkg/response"
 	"google.golang.org/grpc"
@@ -18,33 +20,59 @@ import (
 
 type AuthHandler struct {
 	authClient pb.AuthServiceClient
+	logger logger.Logger
 }
 
-
+func connectWithRetry(target string, service string) (*grpc.ClientConn, error) {
+    maxAttempts := 5
+    var conn *grpc.ClientConn
+    var err error
+    
+    for i := 0; i < maxAttempts; i++ {
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+        
+        log.Printf("Attempting to connect to %s service (attempt %d/%d)...", service, i+1, maxAttempts)
+        
+        conn, err = grpc.DialContext(ctx,
+            target,
+            grpc.WithTransportCredentials(insecure.NewCredentials()),
+            grpc.WithBlock(),
+        ) 
+    
+        if err == nil {
+            log.Printf("Successfully connected to %s service", service)
+            return conn, nil
+        }
+        
+        log.Printf("Failed to connect to %s service: %v. Retrying...", service, err)
+        time.Sleep(2 * time.Second)
+    }
+    
+    return nil, fmt.Errorf("failed to connect to %s service after %d attempts: %v", service, maxAttempts, err)
+}
 
 func NewGateway(ctx context.Context) (*AuthHandler, error) {
-	log.Println("Attempting to connect to auth service...")
-
-	conn, err := grpc.DialContext(ctx,
-		"localhost:50051",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
-	if err != nil {
-		log.Printf("Failed to connect to auth service: %v", err)
-		return nil, fmt.Errorf("failed to connect to auth service: %v", err)
-	}
-
-	log.Println("Successfully connected to auth service")
-	return &AuthHandler{
-		authClient: pb.NewAuthServiceClient(conn),
-	}, nil
+    conn, err := connectWithRetry("auth_service:50051", "auth")
+    if err != nil {
+        return nil, err
+    }
+    
+    return &AuthHandler{
+        authClient: pb.NewAuthServiceClient(conn),
+    }, nil
 }
+
+
 
 func (h *AuthHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Received create user request: %s %s", r.Method, r.URL.Path)
 
-	var req pb.CreateUserRequest
+	var req struct {
+		Name string `json:"name"`
+		Email  string  `json:"email"`
+		Password string  `json:"password"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Printf("Error decoding request body: %v", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -52,13 +80,19 @@ func (h *AuthHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Decoded request: %+v", &req)
+	clientIP := helpers.GetClientIP(r)
+	userAgent := r.UserAgent()
 
-	resp, err := h.authClient.CreateUser(r.Context(), &pb.CreateUserRequest{
-		Name:     req.Name,
-		Email:    req.Email,
+	regis :=  &pb.CreateUserRequest{
+		Name: req.Name,
+		Email: req.Email,
 		Password: req.Password,
-		Role:     "Admin",
-	})
+		Role: "",
+		IpAddress: clientIP,
+		DeviceInfo: userAgent,
+	}
+
+	resp, err := h.authClient.CreateUser(r.Context(), regis)
 
 	if err != nil {
 		log.Printf("Error from auth service: %v", err.Error())
@@ -95,7 +129,6 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request format", http.StatusBadRequest)
 		return
 	}
-
 	if req.Email == "" || req.Password == "" {
 		http.Error(w, "Email and password are required", http.StatusBadRequest)
 		return
@@ -141,7 +174,6 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
-   
 
     userid, err := middleware.GetUserFromContext(r.Context())
 	 if err != nil {
@@ -161,6 +193,32 @@ func (h *AuthHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
     response := response.Success(users, "Profile received successfully")
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *AuthHandler)   HandleLogout(w http.ResponseWriter,  r *http.Request){
+	user , err :=   middleware.GetUserFromContext(r.Context())
+	token :=  r.URL.Query().Get("token")
+
+	if err != nil {
+		response.Error(http.StatusUnauthorized, "Unauthorized")
+        return
+	}
+
+	logout,err :=  h.authClient.Logout(r.Context(), &pb.LogoutRequest{
+		AccessToken: token,
+		UserId: user.UserId,
+	})
+
+	if err != nil {
+		response.Error(http.StatusUnauthorized, "Unauthorized")
+        return
+	}
+
+	if err := json.NewEncoder(w).Encode(logout); err != nil {
 		log.Printf("Error encoding response: %v", err)
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		return

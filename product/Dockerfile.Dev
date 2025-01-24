@@ -1,0 +1,63 @@
+FROM golang:1.22-alpine
+
+WORKDIR /app
+
+# Install Air and required build tools
+RUN apk add --no-cache git gcc musl-dev netcat-openbsd && \
+    go install github.com/cosmtrek/air@v1.44.0
+
+# Copy common module first
+COPY common ./common
+
+WORKDIR /app/product
+
+# Create tmp directory
+RUN mkdir -p tmp && chmod 777 tmp
+
+# Copy product module files
+COPY product/go.mod product/go.sum ./
+
+# Download dependencies
+RUN go mod download && \
+    go mod tidy
+
+# Copy the rest of product files
+COPY product/ .
+
+# Create .air.toml configuration
+RUN echo '[build]\n\
+  cmd = "go build -o ./tmp/main ."\n\
+  bin = "./tmp/main"\n\
+  include_ext = ["go", "tpl", "tmpl", "html"]\n\
+  exclude_dir = ["assets", "tmp", "vendor"]\n\
+  delay = 1000\n\
+  kill_delay = "0.5s"\n\
+  send_interrupt = false\n\
+  stop_on_error = true\n\
+\n\
+[color]\n\
+  build = "yellow"\n\
+  main = "magenta"\n\
+  runner = "green"\n\
+  watcher = "cyan"\n\
+\n\
+[screen]\n\
+  clear_on_rebuild = true' > .air.toml
+
+# Start script to wait for PostgreSQL
+COPY <<EOF /start.sh
+#!/bin/sh
+until nc -z postgresql 5432; do
+  echo "Waiting for PostgreSQL to be ready..."
+  sleep 2
+done
+echo "PostgreSQL is ready"
+sleep 5  # Give extra time for PostgreSQL initialization
+
+cd /app/product
+air
+EOF
+
+RUN chmod +x /start.sh
+
+CMD ["/start.sh"]

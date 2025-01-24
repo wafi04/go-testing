@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	port = ":50053"
+	port = ":50052"
 )
 
 func main(){

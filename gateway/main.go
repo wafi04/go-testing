@@ -30,11 +30,11 @@ func main() {
     if err != nil {
         logs.Log(logger.ErrorLevel, "Failed to connect Category Service : %v",err)
     }
-    productGateway,err :=  producthandler.NewCategoryGateway(ctx)
+    productGateway,err :=  producthandler.NewProductGateway(ctx)
     if err != nil {
         logs.Log(logger.ErrorLevel, "Failed to connect product Service : %v",err)
     }
-    
+
     r := mux.NewRouter()
 
     // 1. Logging middleware
@@ -55,7 +55,7 @@ func main() {
     
     srv := &http.Server{
         Handler:      r,
-        Addr:         "127.0.0.1:4000",
+        Addr:         "0.0.0.0:4000",
         WriteTimeout: 15 * time.Second,
         ReadTimeout:  15 * time.Second,
     }

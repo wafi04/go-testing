@@ -12,11 +12,9 @@ import (
 	"github.com/wafi04/go-testing/common/pkg/logger"
 	"google.golang.org/grpc"
 )
-
 const (
-	port = ":50052"
+	port = ":50053"
 )
-
 func main(){
 	log :=  logger.NewLogger()
 	db ,err :=  database.New()

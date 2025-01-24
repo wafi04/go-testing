@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/wafi04/go-testing/auth/middleware"
 	pb "github.com/wafi04/go-testing/category/grpc"
 	"github.com/wafi04/go-testing/gateway/pkg/response"
 	"google.golang.org/grpc"
@@ -20,47 +20,45 @@ import (
 type CategoryHandler struct {
 	categoryClient pb.CategoryServiceClient
 }
-func RegisterCategoryHandler(router *mux.Router, handler *CategoryHandler) {
-    // router.Use(func(next http.Handler) http.Handler {
-    //     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    //         w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-    //         w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT,DELETE, OPTIONS") 
-    //         w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-    //         w.Header().Set("Access-Control-Allow-Credentials", "true")
-            
-    //         if r.Method == "OPTIONS" {
-    //             w.WriteHeader(http.StatusOK)
-    //             return
-    //         }
-    //         next.ServeHTTP(w, r)
-    //     })
-    // })
-    router.Use(middleware.AuthMiddleware)
-    router.HandleFunc("/category", handler.HandleCreateCategory).Methods("POST", "OPTIONS")
-    router.HandleFunc("/category", handler.HandleGetCategories).Methods("GET", "OPTIONS")
-    router.HandleFunc("/list-categories", handler.HandleListCategories).Methods("GET", "OPTIONS")
-    router.HandleFunc("/category/{id}", handler.HandleUpdateCategory).Methods("PUT", "OPTIONS") 
-    router.HandleFunc("/category/{id}", handler.HandleDeleteCategory).Methods("DELETE", "OPTIONS") 
 
+func connectWithRetry(target string, service string) (*grpc.ClientConn, error) {
+    maxAttempts := 5
+    var conn *grpc.ClientConn
+    var err error
+    
+    for i := 0; i < maxAttempts; i++ {
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+        
+        log.Printf("Attempting to connect to %s service (attempt %d/%d)...", service, i+1, maxAttempts)
+        
+        conn, err = grpc.DialContext(ctx,
+            target,
+            grpc.WithTransportCredentials(insecure.NewCredentials()),
+            grpc.WithBlock(),
+        )
+        
+        if err == nil {
+            log.Printf("Successfully connected to %s service", service)
+            return conn, nil
+        }
+        
+        log.Printf("Failed to connect to %s service: %v. Retrying...", service, err)
+        time.Sleep(2 * time.Second)
+    }
+    
+    return nil, fmt.Errorf("failed to connect to %s service after %d attempts: %v", service, maxAttempts, err)
 }
 
 func NewCategoryGateway(ctx context.Context) (*CategoryHandler, error) {
-	log.Println("Attempting to connect to auth service...")
-
-	conn, err := grpc.DialContext(ctx,
-		"localhost:50052",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
-	if err != nil {
-		log.Printf("Failed to connect to category service: %v", err)
-		return nil, fmt.Errorf("failed to connect to auth service: %v", err)
-	}
-
-	log.Println("Successfully connected to auth service")
-	return &CategoryHandler{
-		categoryClient: pb.NewCategoryServiceClient(conn),
-	}, nil
+    conn, err := connectWithRetry("category_service:50053", "category")
+    if err != nil {
+        return nil, err
+    }
+    
+    return &CategoryHandler{
+       categoryClient: pb.NewCategoryServiceClient(conn),
+    }, nil
 }
 
 func (h *CategoryHandler) HandleCreateCategory(w http.ResponseWriter, r *http.Request) {
@@ -154,6 +152,8 @@ func (h *CategoryHandler) HandleListCategories(w http.ResponseWriter, r *http.Re
         return
     }
 }
+
+
 
 
 func (h *CategoryHandler) HandleUpdateCategory(w http.ResponseWriter, r *http.Request) {

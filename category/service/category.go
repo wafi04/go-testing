@@ -88,7 +88,6 @@ func (s *CategoryService) CreateCategory(ctx context.Context, req *pb.CreateCate
         return nil, fmt.Errorf("failed to commit transaction: %v", err)
     }
 
-    // Handle optional fields
     if parentID.Valid {
         category.ParentId = &parentID.String
     }

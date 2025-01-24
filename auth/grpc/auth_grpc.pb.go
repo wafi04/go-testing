@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v3.12.4
-// source: grpc/auth.proto
+// source: pkg/proto/auth/auth.proto
 
 package pb
 
@@ -19,25 +19,26 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_CreateUser_FullMethodName         = "/pb.AuthService/CreateUser"
-	AuthService_Login_FullMethodName              = "/pb.AuthService/Login"
-	AuthService_GetUser_FullMethodName            = "/pb.AuthService/GetUser"
-	AuthService_Logout_FullMethodName             = "/pb.AuthService/Logout"
-	AuthService_ValidateToken_FullMethodName      = "/pb.AuthService/ValidateToken"
-	AuthService_RefreshToken_FullMethodName       = "/pb.AuthService/RefreshToken"
-	AuthService_UpdateUser_FullMethodName         = "/pb.AuthService/UpdateUser"
-	AuthService_VerifyEmail_FullMethodName        = "/pb.AuthService/VerifyEmail"
-	AuthService_ResendVerification_FullMethodName = "/pb.AuthService/ResendVerification"
-	AuthService_GetSession_FullMethodName         = "/pb.AuthService/GetSession"
-	AuthService_RevokeSession_FullMethodName      = "/pb.AuthService/RevokeSession"
-	AuthService_ListSessions_FullMethodName       = "/pb.AuthService/ListSessions"
+	AuthService_CreateUser_FullMethodName           = "/pb.AuthService/CreateUser"
+	AuthService_Login_FullMethodName                = "/pb.AuthService/Login"
+	AuthService_GetUser_FullMethodName              = "/pb.AuthService/GetUser"
+	AuthService_Logout_FullMethodName               = "/pb.AuthService/Logout"
+	AuthService_ValidateToken_FullMethodName        = "/pb.AuthService/ValidateToken"
+	AuthService_RefreshToken_FullMethodName         = "/pb.AuthService/RefreshToken"
+	AuthService_UpdateUser_FullMethodName           = "/pb.AuthService/UpdateUser"
+	AuthService_VerifyEmail_FullMethodName          = "/pb.AuthService/VerifyEmail"
+	AuthService_ResendVerification_FullMethodName   = "/pb.AuthService/ResendVerification"
+	AuthService_GetSession_FullMethodName           = "/pb.AuthService/GetSession"
+	AuthService_RevokeSession_FullMethodName        = "/pb.AuthService/RevokeSession"
+	AuthService_ListSessions_FullMethodName         = "/pb.AuthService/ListSessions"
+	AuthService_ResetPassword_FullMethodName        = "/pb.AuthService/ResetPassword"
+	AuthService_RequestPasswordReset_FullMethodName = "/pb.AuthService/RequestPasswordReset"
 )
 
 // AuthServiceClient is the client API for AuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthServiceClient interface {
-	// Existing RPCs remain the same
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
@@ -50,6 +51,8 @@ type AuthServiceClient interface {
 	GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*GetSessionResponse, error)
 	RevokeSession(ctx context.Context, in *RevokeSessionRequest, opts ...grpc.CallOption) (*RevokeSessionResponse, error)
 	ListSessions(ctx context.Context, in *ListSessionsRequest, opts ...grpc.CallOption) (*ListSessionsResponse, error)
+	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*ResetPasswordResponse, error)
+	RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error)
 }
 
 type authServiceClient struct {
@@ -180,11 +183,30 @@ func (c *authServiceClient) ListSessions(ctx context.Context, in *ListSessionsRe
 	return out, nil
 }
 
+func (c *authServiceClient) ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*ResetPasswordResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResetPasswordResponse)
+	err := c.cc.Invoke(ctx, AuthService_ResetPassword_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RequestPasswordResetResponse)
+	err := c.cc.Invoke(ctx, AuthService_RequestPasswordReset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
 type AuthServiceServer interface {
-	// Existing RPCs remain the same
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
@@ -197,6 +219,8 @@ type AuthServiceServer interface {
 	GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error)
 	RevokeSession(context.Context, *RevokeSessionRequest) (*RevokeSessionResponse, error)
 	ListSessions(context.Context, *ListSessionsRequest) (*ListSessionsResponse, error)
+	ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error)
+	RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -242,6 +266,12 @@ func (UnimplementedAuthServiceServer) RevokeSession(context.Context, *RevokeSess
 }
 func (UnimplementedAuthServiceServer) ListSessions(context.Context, *ListSessionsRequest) (*ListSessionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSessions not implemented")
+}
+func (UnimplementedAuthServiceServer) ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResetPassword not implemented")
+}
+func (UnimplementedAuthServiceServer) RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestPasswordReset not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -480,6 +510,42 @@ func _AuthService_ListSessions_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_ResetPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResetPasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ResetPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ResetPassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ResetPassword(ctx, req.(*ResetPasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_RequestPasswordReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestPasswordResetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).RequestPasswordReset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_RequestPasswordReset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).RequestPasswordReset(ctx, req.(*RequestPasswordResetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -535,7 +601,15 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ListSessions",
 			Handler:    _AuthService_ListSessions_Handler,
 		},
+		{
+			MethodName: "ResetPassword",
+			Handler:    _AuthService_ResetPassword_Handler,
+		},
+		{
+			MethodName: "RequestPasswordReset",
+			Handler:    _AuthService_RequestPasswordReset_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "grpc/auth.proto",
+	Metadata: "pkg/proto/auth/auth.proto",
 }

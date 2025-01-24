@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+option go_package = "github.com/wafi04/go-testing/product/grpc/pb";
+
+package pb;
+
+import "google/protobuf/timestamp.proto";
+
+// Product message definition
+message Product {
+    string id = 1;
+    string name = 2;
+    optional string sub_title = 3;
+    string description = 4;
+    string sku = 5;
+    double price = 6;
+    repeated ProductVariant variants = 7;
+    string category_id = 8;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;
+}
+
+// ProductVariant message definition
+message ProductVariant {
+    string id = 1;
+    string color = 2;
+    string sku = 3;
+    repeated ProductImage images = 4;
+    repeated Inventory inventory = 5;
+    string product_id = 6;
+}
+
+// ProductImage message definition
+message ProductImage {
+    string id = 1;
+    string url = 2;
+    string variant_id = 3;
+    bool is_main = 4;
+}
+
+// Inventory message definition
+message Inventory {
+    string id = 1;
+    string variant_id = 2;
+    string size = 3;
+    int32 stock = 4;
+    int32 reserved_stock = 5;
+    int32 available_stock = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+}
+
+// Product Service definition
+service ProductService {
+    // Product operations
+    rpc CreateProduct (CreateProductRequest) returns (Product);
+    rpc GetProduct (GetProductRequest) returns (Product);
+    rpc UpdateProduct (UpdateProductRequest) returns (Product);
+    rpc DeleteProduct (DeleteProductRequest) returns (DeleteProductResponse);
+    rpc ListProducts (ListProductsRequest) returns (ListProductsResponse);
+    
+    // Product Variant operations
+    rpc CreateProductVariant (CreateProductVariantRequest) returns (ProductVariant);
+    rpc UpdateProductVariant (UpdateProductVariantRequest) returns (ProductVariant);
+    rpc DeleteProductVariant (DeleteProductVariantRequest) returns (DeleteProductResponse);
+    
+    // Product Image operations
+    rpc AddProductImage (AddProductImageRequest) returns (ProductImage);
+    rpc UpdateProductImage (UpdateProductImageRequest) returns (ProductImage);
+    rpc DeleteProductImage (DeleteProductImageRequest) returns (DeleteProductResponse);
+    
+    // Inventory operations
+    rpc CreateInventory (CreateInventoryRequest) returns (Inventory);
+    rpc UpdateInventory (UpdateInventoryRequest) returns (Inventory);
+    rpc UpdateStock (UpdateStockRequest) returns (Inventory);
+    rpc ReserveStock (ReserveStockRequest) returns (ReserveStockResponse);
+    rpc ReleaseReservedStock (ReleaseReservedStockRequest) returns (Inventory);
+    rpc GetInventoryByVariant (GetInventoryByVariantRequest) returns (GetInventoryByVariantResponse);
+}
+
+// Request/Response messages for Product
+message CreateProductRequest {
+    Product product = 1;
+}
+
+message GetProductRequest {
+    string id = 1;
+}
+
+message UpdateProductRequest {
+    Product product = 1;
+}
+
+message DeleteProductRequest {
+    string id = 1;
+}
+
+message DeleteProductResponse {
+    bool success = 1;
+}
+
+message ListProductsRequest {
+    int32 page_size = 1;
+    string page_token = 2;
+}
+
+message ListProductsResponse {
+    repeated Product products = 1;
+    string next_page_token = 2;
+}
+
+// Request/Response messages for Product Variant
+message CreateProductVariantRequest {
+    string product_id = 1;
+    string color = 2;
+    string sku = 3;
+}
+
+message UpdateProductVariantRequest {
+    ProductVariant variant = 1;
+}
+
+message DeleteProductVariantRequest {
+    string id = 1;
+}
+
+// Request/Response messages for Product Image
+message AddProductImageRequest {
+    string variant_id = 1;
+    string url = 2;
+    bool is_main = 3;
+}
+
+message UpdateProductImageRequest {
+    ProductImage image = 1;
+}
+
+message DeleteProductImageRequest {
+    string id = 1;
+}
+
+// Request/Response messages for Inventory
+message CreateInventoryRequest {
+    string variant_id = 1;
+    string size = 2;
+    int32 initial_stock = 3;
+}
+
+message UpdateInventoryRequest {
+    Inventory inventory = 1;
+}
+
+message UpdateStockRequest {
+    string inventory_id = 1;
+    int32 quantity = 2;
+}
+
+message ReserveStockRequest {
+    string inventory_id = 1;
+    int32 quantity = 2;
+}
+
+message ReserveStockResponse {
+    bool success = 1;
+    Inventory inventory = 2;
+    string error_message = 3;
+}
+
+message ReleaseReservedStockRequest {
+    string inventory_id = 1;
+    int32 quantity = 2;
+}
+
+message GetInventoryByVariantRequest {
+    string variant_id = 1;
+}
+
+message GetInventoryByVariantResponse {
+    repeated Inventory inventory = 1;
+}
