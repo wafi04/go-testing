@@ -11,21 +11,23 @@ import (
 	"github.com/wafi04/go-testing/auth/internal/handler"
 	"github.com/wafi04/go-testing/auth/internal/repository/user"
 	"github.com/wafi04/go-testing/auth/internal/service"
+	"github.com/wafi04/go-testing/common/pkg/configs"
 	"google.golang.org/grpc"
 )
 
-
 func main() {
 	log := logger.NewLogger()
+	config :=  configs.LoadEnv("auth")
 
+	
 	db, err := database.New()
 	if err != nil {
 		log.Log(logger.ErrorLevel, "Failed to initialize database : %v: ", err)
 	}
 
-	
 	defer db.Close()
 	health := db.Health()
+	log.Log(logger.InfoLevel, "Env : %v",config)
 	log.Log(logger.InfoLevel, "Database health : %v", health["status"])
 	userRepo := user.NewUserRepository(db.DB)
 	userService := &service.UserService{

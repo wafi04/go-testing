@@ -27,16 +27,9 @@ func (s *UserRepository)  ResendVerification(ctx context.Context,req  *pb.Resend
     }
 
 
-    if err != nil {
-        return nil, fmt.Errorf("failed to generate verification token: %w", err)
-    }
-    
 
-    verifyCode := generateVerificationCode()
-    expiresAt := time.Now().Add(1 * time.Hour)
+  
 
-    
-    
 
     query := `
         INSERT INTO verification_tokens (

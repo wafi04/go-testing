@@ -3,6 +3,7 @@ module github.com/wafi04/go-testing/common
 go 1.22.0
 
 require (
+	github.com/joho/godotenv v1.5.1
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.3
 )

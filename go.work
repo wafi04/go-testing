@@ -4,6 +4,7 @@ use (
 	./auth
 	./category
 	./common
+	./files
 	./gateway
 	./product
 )
