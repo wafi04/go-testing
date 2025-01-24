@@ -19,7 +19,6 @@ func main() {
 	log := logger.NewLogger()
 	config :=  configs.LoadEnv("auth")
 
-	
 	db, err := database.New()
 	if err != nil {
 		log.Log(logger.ErrorLevel, "Failed to initialize database : %v: ", err)

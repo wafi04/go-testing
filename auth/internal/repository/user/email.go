@@ -28,7 +28,6 @@ func (s *UserRepository)  ResendVerification(ctx context.Context,req  *pb.Resend
 
 
 
-  
 
 
     query := `

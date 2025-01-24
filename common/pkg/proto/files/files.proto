@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option go_package = "github.com/wafi04/files/service/pb";
+
+package pb;
+
+
+service FileService {
+  rpc UploadFile(FileUploadRequest) returns (FileUploadResponse) {}
+}
+
+
+message FileUploadResponse {
+  string url = 1;            // URL hasil upload
+  string public_id = 2;      // ID publik di Cloudinary
+  string error = 3;          // Pesan error jika ada
+}
+
+message  FileUploadRequest {
+    bytes  file_data = 1;
+    string  file_name = 2;
+    string folder =3;
+    string public_id =4;
+    FileType file_type = 5;
+
+    enum  FileType {
+        IMAGE =0;
+        VIDEO =1;
+        DOCUMENT = 2;
+    }
+}

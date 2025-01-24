@@ -21,7 +21,7 @@ type CategoryHandler struct {
 	categoryClient pb.CategoryServiceClient
 }
 
-func connectWithRetry(target string, service string) (*grpc.ClientConn, error) {
+func ConnectWithRetry(target string, service string) (*grpc.ClientConn, error) {
     maxAttempts := 5
     var conn *grpc.ClientConn
     var err error
@@ -51,7 +51,7 @@ func connectWithRetry(target string, service string) (*grpc.ClientConn, error) {
 }
 
 func NewCategoryGateway(ctx context.Context) (*CategoryHandler, error) {
-    conn, err := connectWithRetry("category_service:50053", "category")
+    conn, err := ConnectWithRetry("category_service:50053", "category")
     if err != nil {
         return nil, err
     }

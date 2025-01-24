@@ -1,8 +1,9 @@
 FROM golang:1.22-alpine
 
-WORKDIR /app/auth
+WORKDIR /app
 
-# Install Air and required build tools
+COPY  go.work go.work.sum ./
+
 RUN apk add --no-cache git gcc musl-dev netcat-openbsd \
     && go install github.com/cosmtrek/air@v1.44.0
 
@@ -10,7 +11,10 @@ RUN apk add --no-cache git gcc musl-dev netcat-openbsd \
 RUN mkdir -p tmp && chmod 777 tmp
 
 # Copy local files
-COPY . .
+COPY common ./common
+COPY auth ./auth
+
+WORKDIR /app/auth
 
 # Create .air.toml configuration
 RUN echo '[build]\n\

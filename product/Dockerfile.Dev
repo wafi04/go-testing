@@ -8,6 +8,7 @@ RUN apk add --no-cache git gcc musl-dev netcat-openbsd && \
 
 # Copy common module first
 COPY common ./common
+COPY go.work go.work.sum ./
 
 WORKDIR /app/product
 

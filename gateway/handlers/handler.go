@@ -9,12 +9,14 @@ import (
 	"github.com/wafi04/go-testing/auth/middleware"
 	"github.com/wafi04/go-testing/gateway/handlers/authhandler"
 	"github.com/wafi04/go-testing/gateway/handlers/categoryhandler"
+	"github.com/wafi04/go-testing/gateway/handlers/filehandler"
 	"github.com/wafi04/go-testing/gateway/handlers/producthandler"
 )
 func SetupRoutes(
 	authGateway  *authhandler.AuthHandler,
 	categoryGateway  *categoryhandler.CategoryHandler,
 	productGateway  *producthandler.ProductHandler,
+    fileGateway  *filehandler.Filehandler,
 ) *mux.Router{
 	r :=   mux.NewRouter()
 
@@ -38,6 +40,7 @@ func SetupRoutes(
 
     // Public routes
     public := api.PathPrefix("").Subrouter()
+    public.HandleFunc("/testing", fileGateway.HandleUploadFile).Methods("POST","OPTIONS")
     public.HandleFunc("/auth/register", authGateway.HandleCreateUser).Methods("POST", "OPTIONS")
     public.HandleFunc("/auth/login", authGateway.HandleLogin).Methods("POST", "OPTIONS")
     public.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
@@ -48,6 +51,9 @@ func SetupRoutes(
 		return
 	}
     })
+
+
+
 
 
     // Protected routes

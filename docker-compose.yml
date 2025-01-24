@@ -45,11 +45,11 @@ services:
 
   auth_service:
     build:
-      context: ./auth
-      dockerfile: Dockerfile.Dev
+      context: .
+      dockerfile: ./auth/Dockerfile.Dev
     volumes:
-      - ./auth:/app/auth
-      - go_modules:/go/pkg/mod
+      - ./go.work:/app/go.work
+      - ./go.work.sum:/app/go.work.sum
       - ./common:/app/common
     environment:
       - DB_HOST=postgresql
@@ -57,8 +57,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=auth
-      - APP_PASSWORD=gaxa rpob imwk fybt
-      - APP_EMAIL="wafiq3040@gmail.com"
+
     ports:
       - "50051:50051"
     depends_on:
